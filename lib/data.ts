@@ -165,6 +165,19 @@ export async function fetchSunflowerFrames(sunflowerId: string): Promise<Frame[]
   return (data ?? []) as Frame[];
 }
 
+// One flower per spot: the film is the spot's watering photos, oldest first.
+export async function fetchSpotFrames(spotId: string): Promise<Frame[]> {
+  const { data, error } = await supabase
+    .from("waterings")
+    .select("photo_path, watered_at, watered_by")
+    .eq("spot_id", spotId)
+    .eq("hidden", false)
+    .not("photo_path", "is", null)
+    .order("watered_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Frame[];
+}
+
 // Claim (name) one unnamed sunflower at a spot. Returns the named row, or null
 // if none were free.
 export async function nameSunflower(input: {
@@ -260,27 +273,24 @@ export async function uploadBlob(blob: Blob, prefix: string, ext = "jpg"): Promi
 export interface Stats {
   plantingSpots: number;
   waterSpots: number;
-  totalSunflowers: number;
-  namedSunflowers: number;
+  totalSunflowers: number; // one flower per spot => same as plantingSpots
   totalWaterings: number;
   weeklyWaterings: number;
 }
 
 export async function fetchStats(): Promise<Stats> {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-  const [spotsRes, sunNamed, sunTotal, waterCount, weekCount] = await Promise.all([
-    supabase.from("spots").select("kind, sunflower_count"),
-    supabase.from("sunflowers").select("id", { count: "exact", head: true }).not("name", "is", null),
-    supabase.from("sunflowers").select("id", { count: "exact", head: true }),
+  const [spotsRes, waterCount, weekCount] = await Promise.all([
+    supabase.from("spots").select("kind"),
     supabase.from("waterings").select("id", { count: "exact", head: true }).eq("hidden", false),
     supabase.from("waterings").select("id", { count: "exact", head: true }).eq("hidden", false).gte("watered_at", weekAgo),
   ]);
-  const spots = (spotsRes.data ?? []) as { kind: SpotKind; sunflower_count: number }[];
+  const spots = (spotsRes.data ?? []) as { kind: SpotKind }[];
+  const planting = spots.filter((s) => s.kind === "planting").length;
   return {
-    plantingSpots: spots.filter((s) => s.kind === "planting").length,
+    plantingSpots: planting,
     waterSpots: spots.filter((s) => s.kind === "water").length,
-    totalSunflowers: spots.reduce((a, s) => a + (s.sunflower_count || 0), 0) || (sunTotal.count ?? 0),
-    namedSunflowers: sunNamed.count ?? 0,
+    totalSunflowers: planting,
     totalWaterings: waterCount.count ?? 0,
     weeklyWaterings: weekCount.count ?? 0,
   };
@@ -291,37 +301,26 @@ export async function fetchStats(): Promise<Stats> {
 export interface GardenerScore {
   name: string;
   waterings: number;
-  namings: number;
   score: number;
 }
 
 const PTS_WATER = 10;
-const PTS_NAME = 25;
 
 export async function fetchLeaderboard(): Promise<GardenerScore[]> {
-  const [wRes, sRes] = await Promise.all([
-    supabase.from("waterings").select("watered_by").eq("hidden", false).not("watered_by", "is", null),
-    supabase.from("sunflowers").select("named_by").eq("hidden", false).not("named_by", "is", null),
-  ]);
-  if (wRes.error) throw wRes.error;
-  if (sRes.error) throw sRes.error;
+  const { data, error } = await supabase
+    .from("waterings")
+    .select("watered_by")
+    .eq("hidden", false)
+    .not("watered_by", "is", null);
+  if (error) throw error;
 
-  const map = new Map<string, { waterings: number; namings: number }>();
-  for (const r of wRes.data ?? []) {
+  const map = new Map<string, number>();
+  for (const r of data ?? []) {
     const n = (r.watered_by ?? "").trim();
     if (!n) continue;
-    const e = map.get(n) ?? { waterings: 0, namings: 0 };
-    e.waterings++;
-    map.set(n, e);
-  }
-  for (const r of sRes.data ?? []) {
-    const n = (r.named_by ?? "").trim();
-    if (!n) continue;
-    const e = map.get(n) ?? { waterings: 0, namings: 0 };
-    e.namings++;
-    map.set(n, e);
+    map.set(n, (map.get(n) ?? 0) + 1);
   }
   return [...map.entries()]
-    .map(([name, e]) => ({ name, ...e, score: e.waterings * PTS_WATER + e.namings * PTS_NAME }))
+    .map(([name, waterings]) => ({ name, waterings, score: waterings * PTS_WATER }))
     .sort((a, b) => b.score - a.score);
 }

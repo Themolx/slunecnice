@@ -23,8 +23,7 @@ export default async function LeaderboardPage() {
           Žebříček
         </h1>
         <p className="type-body" style={{ maxWidth: 520, marginTop: 12 }}>
-          Za každou zálivku 10 bodů, za pojmenování slunečnice 25 bodů. Zalít jde
-          jen fyzicky u slunečnice, takže body se nedají podvádět od stolu.
+          Za každou zálivku 10 bodů. Najdi nejbližší slunečnici, zalij ji a vyfoť.
         </p>
 
         <div className="bar bar-sun" style={{ margin: "20px 0", maxWidth: 120 }} />
@@ -55,7 +54,7 @@ export default async function LeaderboardPage() {
                     {r.name}
                   </div>
                   <div className="type-label" style={{ color: i === 0 ? "var(--text)" : "var(--muted)", marginTop: 2 }}>
-                    {r.waterings} zálivek · {r.namings} jmen
+                    {r.waterings} zálivek
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>

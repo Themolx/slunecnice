@@ -15,9 +15,9 @@
   --muted: #8A8472;
   --bar-height: 8px;
   --border-thick: 3px;
-  --radius: 0;
-  --radius-sm: 0;
-  --radius-pill: 0;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --radius-pill: 999px;
 }
 
 @theme inline {

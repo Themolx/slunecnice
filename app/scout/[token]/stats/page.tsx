@@ -11,8 +11,8 @@ export default async function StatsPage({ params }: { params: Promise<{ token: s
     ["Míst k sázení", s.plantingSpots],
     ["Zdrojů vody", s.waterSpots],
     ["Slunečnic celkem", s.totalSunflowers],
-    ["Pojmenováno", s.namedSunflowers],
     ["Zálivek", s.totalWaterings],
+    ["Tento týden", s.weeklyWaterings],
   ];
 
   return (

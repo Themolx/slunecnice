@@ -4,13 +4,12 @@ import {
   getGardener,
   setGardener,
   markOnboarded,
-  markCameraOk,
+  markGpsOk,
   isOnboarded,
   POINTS_WATER,
-  POINTS_NAME,
 } from "@/lib/gardener";
 
-type Step = "start" | "name" | "camera";
+type Step = "start" | "name" | "gps";
 
 /**
  * First-run onboarding overlay. Self-gates on localStorage: renders nothing if
@@ -46,22 +45,25 @@ export default function Onboarding() {
     setOpen(false);
   };
 
-  const requestCamera = async () => {
+  const requestGps = async () => {
     setBusy(true);
     setError(null);
-    try {
-      const stream = await Promise.race([
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }),
-        new Promise<MediaStream>((_, rej) => window.setTimeout(() => rej(new Error("timeout")), 15000)),
-      ]);
-      stream.getTracks().forEach((t) => t.stop());
-      markCameraOk();
-      finish();
-    } catch {
-      setError("Kameru povolíš později u slunečnice. Můžeš pokračovat.");
-    } finally {
+    if (!navigator.geolocation) {
+      setError("Polohu povolíš později. Můžeš pokračovat.");
       setBusy(false);
+      return;
     }
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        markGpsOk();
+        finish();
+      },
+      () => {
+        setError("Bez polohy ti neukážeme nejbližší slunečnice. Povolit můžeš i později.");
+        setBusy(false);
+      },
+      { enableHighAccuracy: true, timeout: 12000 }
+    );
   };
 
   return (
@@ -80,13 +82,14 @@ export default function Onboarding() {
       <div style={{ width: "min(460px, 100%)" }} className="anim-slideup">
         {/* progress bars */}
         <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
-          {(["start", "name", "camera"] as Step[]).map((s, i) => (
+          {(["start", "name", "gps"] as Step[]).map((s, i) => (
             <div
               key={s}
               style={{
                 flex: 1,
                 height: 6,
-                background: ["start", "name", "camera"].indexOf(step) >= i ? "var(--text)" : "#e2ddc9",
+                borderRadius: 999,
+                background: ["start", "name", "gps"].indexOf(step) >= i ? "var(--text)" : "#e2ddc9",
               }}
             />
           ))}
@@ -99,9 +102,9 @@ export default function Onboarding() {
             <div className="bar bar-sun" style={{ margin: "18px 0", maxWidth: 100 }} />
             <ol style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 14 }}>
               {[
-                ["1", "Najdi slunečnici na mapě", "Žluté body po celém městě."],
-                ["2", "Zalij ji", "Ověříme polohu, musíš být u ní. Za zálivku " + POINTS_WATER + " bodů."],
-                ["3", "Vyfoť a pojmenuj", "Z fotek vzniká její film, jak roste. Za jméno " + POINTS_NAME + " bodů."],
+                ["1", "Najdi nejbližší slunečnici", "Mapa a seznam ti je seřadí podle vzdálenosti."],
+                ["2", "Zalij ji", "Za každou zálivku " + POINTS_WATER + " bodů do žebříčku."],
+                ["3", "Vyfoť ji", "Z fotek vzniká její film, jak roste v čase."],
               ].map(([n, t, d]) => (
                 <li key={n} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span className="type-md" style={{ minWidth: 34, height: 34, border: "3px solid var(--text)", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--sun)" }}>{n}</span>
@@ -132,11 +135,11 @@ export default function Onboarding() {
               placeholder="např. Tonda"
               autoFocus
               maxLength={24}
-              onKeyDown={(e) => e.key === "Enter" && name.trim() && setStep("camera")}
+              onKeyDown={(e) => e.key === "Enter" && name.trim() && setStep("gps")}
             />
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
               <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setStep("start")}>Zpět</button>
-              <button className="btn btn-sun" style={{ flex: 1.4 }} onClick={() => name.trim() ? setStep("camera") : setError("Napiš si přezdívku")}>
+              <button className="btn btn-sun" style={{ flex: 1.4 }} onClick={() => name.trim() ? setStep("gps") : setError("Napiš si přezdívku")}>
                 Pokračovat
               </button>
             </div>
@@ -144,21 +147,21 @@ export default function Onboarding() {
           </div>
         )}
 
-        {step === "camera" && (
+        {step === "gps" && (
           <div>
             <div className="type-label" style={{ color: "var(--muted)" }}>Krok 3</div>
-            <h1 className="type-lg" style={{ marginTop: 6 }}>Povol kameru</h1>
+            <h1 className="type-lg" style={{ marginTop: 6 }}>Povol polohu</h1>
             <p className="type-body" style={{ marginTop: 8, marginBottom: 16 }}>
-              Když zaléváš, vyfotíš slunečnici. Vidíš její minulou fotku (onion skin)
-              a skládáš tak film, jak roste v čase.
+              Abychom ti na mapě i v seznamu ukázali nejbližší slunečnice. Polohu
+              používáme jen ve tvém prohlížeči, nikam ji neukládáme.
             </p>
             {error && (
-              <div style={{ border: "3px solid var(--text)", padding: 12, marginBottom: 14, fontSize: 13, fontWeight: 600 }}>
+              <div style={{ border: "3px solid var(--text)", borderRadius: "var(--radius-sm)", padding: 12, marginBottom: 14, fontSize: 13, fontWeight: 600 }}>
                 {error}
               </div>
             )}
-            <button className="btn btn-sun" style={{ width: "100%" }} onClick={requestCamera} disabled={busy}>
-              {busy ? "Čekám na povolení…" : "Povolit kameru"}
+            <button className="btn btn-sun" style={{ width: "100%" }} onClick={requestGps} disabled={busy}>
+              {busy ? "Čekám na povolení…" : "Povolit polohu"}
             </button>
             <button className="btn btn-ghost" style={{ width: "100%", marginTop: 8 }} onClick={finish} disabled={busy}>
               {error ? "Pokračovat na mapu" : "Přeskočit"}

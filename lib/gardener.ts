@@ -57,3 +57,11 @@ export function cameraPrimed(): boolean {
 export function markCameraOk(): void {
   set(CAMERA_OK, "1");
 }
+
+const GPS_OK = "slunecnice_gps_ok";
+export function gpsPrimed(): boolean {
+  return get(GPS_OK) === "1";
+}
+export function markGpsOk(): void {
+  set(GPS_OK, "1");
+}

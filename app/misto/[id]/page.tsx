@@ -1,11 +1,36 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PublicNav from "@/components/PublicNav";
+import type { Metadata } from "next";
 import SpotActions from "./SpotActions";
+import PhotoGallery from "@/components/PhotoGallery";
 import { fetchSpot, fetchWaterings } from "@/lib/data";
-import { photoThumb, photoUrl, STATUS_LABELS, WATER_LABELS, daysSince, drynessColor } from "@/lib/supabase";
+import { photoUrl, STATUS_LABELS, WATER_LABELS, daysSince, drynessColor } from "@/lib/supabase";
+import { SITE_URL } from "@/lib/seo";
 
 export const revalidate = 30;
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const spot = await fetchSpot(id).catch(() => null);
+  if (!spot) return { title: "Místo nenalezeno" };
+  const name = spot.name || (spot.kind === "water" ? "Zdroj vody" : "Slunečnice");
+  const desc =
+    spot.kind === "water"
+      ? `Zdroj vody „${name}" na mapě Slunečnice — kde nabrat vodu na zálivku.`
+      : `Slunečnice „${name}" na živé mapě. Zalij ji, vyfoť a starej se o ni.`;
+  const img = spot.photo_paths.length ? photoUrl(spot.photo_paths[spot.photo_paths.length - 1]) : undefined;
+  return {
+    title: name,
+    description: desc,
+    alternates: { canonical: `/misto/${id}` },
+    openGraph: {
+      title: `${name} · Slunečnice`,
+      description: desc,
+      images: img ? [{ url: img }] : undefined,
+    },
+  };
+}
 
 export default async function SpotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,24 +45,28 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
   // Newest photo first for the hero.
   const photos = [...spot.photo_paths].reverse();
 
+  const spotName = spot.name || (isWater ? "Zdroj vody" : "Slunečnice");
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Mapa", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: spotName, item: `${SITE_URL}/misto/${id}` },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
       <PublicNav />
-      <div style={{ maxWidth: 620, margin: "0 auto", width: "100%", padding: "16px 18px 60px" }}>
+      <div className="anim-blurin" style={{ maxWidth: 620, margin: "0 auto", width: "100%", padding: "16px 18px 60px" }}>
         <Link href="/" className="type-label" style={{ color: "var(--muted)", textDecoration: "none" }}>
           ← Zpět na mapu
         </Link>
 
-        {/* Hero photo */}
-        <div style={{ marginTop: 14, borderRadius: "var(--radius)", overflow: "hidden", border: "3px solid var(--text)", aspectRatio: "1 / 1", background: "#efece2" }}>
-          {photos[0] ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={photoThumb(photos[0], 800)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          ) : (
-            <div className="type-label" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
-              Bez fotky
-            </div>
-          )}
+        {/* Photos (hero + grid + lightbox) */}
+        <div style={{ marginTop: 14 }}>
+          <PhotoGallery photos={photos} />
         </div>
 
         {/* Title + meta */}
@@ -64,23 +93,8 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
         {/* Action */}
         {!isWater && (
           <div style={{ marginTop: 18 }}>
-            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} />
+            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} lastWateredAt={lastWatered} />
           </div>
-        )}
-
-        {/* Extra photos */}
-        {photos.length > 1 && (
-          <section style={{ marginTop: 24 }}>
-            <h2 className="type-label" style={{ color: "var(--muted)", marginBottom: 10 }}>Fotky</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
-              {photos.map((p) => (
-                <a key={p} href={photoUrl(p)} target="_blank" rel="noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photoThumb(p, 200)} alt="" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: "var(--radius-sm)", border: "2px solid var(--text)" }} />
-                </a>
-              ))}
-            </div>
-          </section>
         )}
 
         {/* Watering history */}

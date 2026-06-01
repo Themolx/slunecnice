@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { logWatering, uploadBlob, updateSpot } from "@/lib/data";
-import { distanceMetres, WATERING_RADIUS_M, GPS_VERIFY } from "@/lib/supabase";
+import { distanceMetres, WATERING_RADIUS_M, GPS_VERIFY, WATERING_COOLDOWN_H, hoursSince } from "@/lib/supabase";
 import { getGardener, setGardener, POINTS_WATER } from "@/lib/gardener";
+import { success, tap } from "@/lib/haptics";
 import CameraCapture from "@/components/CameraCapture";
 
 type Step = "panel" | "askName" | "locating" | "tooFar" | "gpsError" | "camera" | "done";
@@ -13,11 +14,13 @@ export default function SpotActions({
   spotLat,
   spotLon,
   initialPhotos,
+  lastWateredAt,
 }: {
   spotId: string;
   spotLat: number;
   spotLon: number;
   initialPhotos: string[];
+  lastWateredAt: string | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("panel");
@@ -35,6 +38,7 @@ export default function SpotActions({
   };
 
   const startWatering = () => {
+    tap();
     setError(null);
     if (!gardener.trim()) {
       setStep("askName");
@@ -94,6 +98,7 @@ export default function SpotActions({
       await updateSpot(spotId, { photo_paths: nextPhotos });
       setPhotos(nextPhotos);
       router.refresh();
+      success();
       setStep("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Uložení selhalo");
@@ -120,14 +125,34 @@ export default function SpotActions({
   return (
     <>
       {/* inline trigger on the page */}
-      <div className="card" style={{ padding: 18 }}>
-        <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
-          {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
-        </button>
-        <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
-          {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů
-        </p>
-      </div>
+      {(() => {
+        const since = hoursSince(lastWateredAt);
+        const onCooldown = since !== null && since < WATERING_COOLDOWN_H;
+        const remaining = since === null ? 0 : Math.ceil(WATERING_COOLDOWN_H - since);
+        return (
+          <div className="card" style={{ padding: 18 }}>
+            {onCooldown ? (
+              <>
+                <button className="btn" style={{ width: "100%", fontSize: 16, padding: "16px 20px", opacity: 0.55, cursor: "not-allowed", background: "#eee" }} disabled>
+                  Dnes už zalitá
+                </button>
+                <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
+                  Tahle slunečnice má vodu. Vrať se za {remaining} h · nebo zalij jinou žíznivou na mapě.
+                </p>
+              </>
+            ) : (
+              <>
+                <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
+                  {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
+                </button>
+                <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
+                  {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů
+                </p>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* full-screen flow */}
       {step !== "panel" && (

@@ -29,6 +29,7 @@ interface MapLike {
   remove: () => void;
   on: (e: string, cb: (ev?: unknown) => void) => void;
   project: (ll: [number, number]) => { x: number; y: number };
+  flyTo?: (opts: { center: [number, number]; zoom?: number; duration?: number; essential?: boolean }) => void;
 }
 
 export default function SpotMap({
@@ -169,6 +170,14 @@ export default function SpotMap({
     const el = mapRef.current as unknown as { _rebuild?: () => void } | null;
     el?._rebuild?.();
   }, [markers, pickPin]);
+
+  // Smoothly fly to a new center (e.g. when the user's GPS location arrives).
+  const centerKey = center ? `${center[0].toFixed(5)},${center[1].toFixed(5)}` : "";
+  useEffect(() => {
+    const m = mapInstance.current;
+    if (m && center) m.flyTo?.({ center, zoom, duration: 1600, essential: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centerKey]);
 
   return (
     <div style={{ position: "relative", width: "100%", height }}>

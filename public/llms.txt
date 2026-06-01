@@ -1,0 +1,33 @@
+# Slunečnice
+
+> Kolektivní guerilla gardening projekt sázení slunečnic ve veřejném prostoru
+> Prahy, se srdcem na Palmovce a v Libni (Praha 8). Lidé najdou na živé mapě
+> nejbližší slunečnici, fyzicky ji zalijí, vyfotí a sbírají body v žebříčku
+> zahradníků. Cílem je proměnit šedá zákoutí města v živá, kvetoucí místa, která
+> krmí včely i ptáky.
+
+Místo: Praha, Palmovka, Libeň, Praha 8.
+Klíčová slova: slunečnice, sázení slunečnic, slunečnice Praha, slunečnice
+Palmovka, guerilla gardening, guerrilla gardening Praha, městská zeleň, komunitní
+zahrada, urban gardening, veřejný prostor, street art Praha, péče o rostliny,
+živá mapa rostlin, kvetoucí město, včely ve městě, biodiverzita města.
+
+## Jak to funguje
+- Na mapě jsou body: žluté = slunečnice, zelené = zdroje vody (pítka, kašny, řeka).
+- Barva okraje slunečnice ukazuje suchost: zelená = čerstvě zalitá, červená = žíznivá.
+- Kdokoliv může slunečnici zalít a vyfotit. Za zálivku získá body do žebříčku.
+- Jednu slunečnici lze zalít jen jednou za zhruba den (nepotřebuje víc vody).
+- Slunečnice se sázejí kolektivně; péče je otevřená všem.
+
+## Klíčové stránky
+- [Mapa](/): živá mapa všech slunečnic a zdrojů vody, řazená podle vzdálenosti.
+- [O projektu](/o-projektu): manifest a jak se zapojit.
+- [Žebříček](/zebricek): pořadí zahradníků podle počtu zálivek.
+- [Detail místa](/misto/[id]): fotky, stav, historie zálivek a tlačítko zalít.
+
+## Technologie
+Next.js, Supabase (Postgres + Storage + Realtime), MapLibre GL (positron skin),
+OpenFreeMap dlaždice. Hostováno na Vercelu.
+
+## Kontext
+Projekt je nekomerční, komunitní a otevřený. Data o místech jsou veřejná.

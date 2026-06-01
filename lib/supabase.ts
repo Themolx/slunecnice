@@ -118,6 +118,10 @@ export const WATERING_RADIUS_M = 80;
 // water from anywhere (handy for testing / demos). Flip back to true for prod.
 export const GPS_VERIFY = false;
 
+// A flower that was watered in the last N hours doesn't need more water — block
+// re-watering so points can't be farmed by spamming one spot.
+export const WATERING_COOLDOWN_H = 20;
+
 // Haversine distance in metres.
 export function distanceMetres(
   a: { lat: number; lon: number },
@@ -140,6 +144,12 @@ export function daysSince(iso: string | null): number | null {
   if (!iso) return null;
   const ms = Date.now() - new Date(iso).getTime();
   return Math.floor(ms / 86400000);
+}
+
+// Hours since an ISO timestamp. Returns null if no timestamp.
+export function hoursSince(iso: string | null): number | null {
+  if (!iso) return null;
+  return (Date.now() - new Date(iso).getTime()) / 3600000;
 }
 
 // "Dryness" color: greener when freshly watered, warmer/redder the longer dry.

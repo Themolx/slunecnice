@@ -1,0 +1,15 @@
+{
+  "supabase": {
+    "projectId": "hgpsboumdnqwtlxkdjjr",
+    "projectUrl": "https://hgpsboumdnqwtlxkdjjr.supabase.co"
+  },
+  "git": {
+    "user": {
+      "name": "oznacnik",
+      "email": "GalerieOznacnik@proton.me"
+    }
+  },
+  "vercel": {
+    "autoLink": true
+  }
+}

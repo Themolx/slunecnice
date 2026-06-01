@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+/* ─── SLUNEČNICE — Design System ────────────────────────────────────────────
+   Galerie Označník DNA: massive type, strong horizontal bars, high contrast.
+   Twist: rounded corners + sunflower yellow accent, deep green for water/care.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --bg: #FFFDF5;        /* warm off-white */
+  --text: #161410;      /* near-black, warm */
+  --sun: #F5C518;       /* sunflower yellow */
+  --sun-deep: #E0A800;  /* darker yellow for borders on yellow */
+  --leaf: #1E7A3D;      /* deep green — water / care */
+  --soil: #6B4E2E;      /* brown */
+  --muted: #8A8472;
+  --bar-height: 8px;
+  --border-thick: 3px;
+  --radius: 0;
+  --radius-sm: 0;
+  --radius-pill: 0;
+}
+
+@theme inline {
+  --color-bg: #FFFDF5;
+  --color-ink: #161410;
+  --color-sun: #F5C518;
+  --color-leaf: #1E7A3D;
+  --color-soil: #6B4E2E;
+  --color-muted: #8A8472;
+  --font-sans: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  font-weight: 700;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+
+.type-display {
+  font-size: clamp(64px, 15vw, 170px);
+  font-weight: 900;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+}
+
+.type-xl {
+  font-size: clamp(44px, 9vw, 110px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.type-lg {
+  font-size: clamp(26px, 5vw, 56px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.type-md {
+  font-size: clamp(18px, 3vw, 32px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.type-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.type-body {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ─── Structural elements ────────────────────────────────────────────────── */
+
+.bar {
+  width: 100%;
+  height: var(--bar-height);
+  background: var(--text);
+  flex-shrink: 0;
+  display: block;
+  border-radius: var(--radius-pill);
+}
+
+.bar-sun { background: var(--sun); }
+.bar-leaf { background: var(--leaf); }
+.bar-thick { height: 16px; }
+.bar-thin { height: 4px; }
+
+.frame {
+  border: var(--border-thick) solid var(--text);
+  border-radius: var(--radius);
+}
+
+.card {
+  border: var(--border-thick) solid var(--text);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 14px 20px;
+  border: var(--border-thick) solid var(--text);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.1s ease;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.5; cursor: wait; }
+
+.btn-sun { background: var(--sun); border-color: var(--text); color: var(--text); }
+.btn-leaf { background: var(--leaf); border-color: var(--text); color: #fff; }
+.btn-ink { background: var(--text); color: var(--bg); }
+.btn-ghost { background: transparent; }
+
+/* ─── Pills / chips ──────────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--text);
+  background: #fff;
+}
+
+/* ─── Navigation ─────────────────────────────────────────────────────────── */
+
+.nav-link {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text);
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+  transition: border-color 0.1s;
+}
+.nav-link:hover { border-bottom-color: var(--sun-deep); }
+.nav-link.active { border-bottom-color: var(--sun-deep); }
+
+/* ─── Inputs ─────────────────────────────────────────────────────────────── */
+
+.field {
+  width: 100%;
+  padding: 14px 16px;
+  border: var(--border-thick) solid var(--text);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  outline: none;
+  color: var(--text);
+}
+.field:focus { border-color: var(--sun-deep); }
+
+textarea.field { resize: vertical; min-height: 90px; font-weight: 500; }
+
+/* ─── Markdown prose ─────────────────────────────────────────────────────── */
+
+.prose-sun {
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 640px;
+}
+.prose-sun h2, .prose-sun h3 {
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-top: 1.6em;
+  margin-bottom: 0.4em;
+}
+.prose-sun p { margin-bottom: 1em; }
+.prose-sun strong { font-weight: 800; }
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes slideup {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes locating {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.35; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.anim-pop { animation: pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.anim-slideup { animation: slideup 0.28s ease-out; }
+.anim-locating { animation: locating 1s ease-in-out infinite; }
+.anim-fade { animation: fade 0.2s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-pop, .anim-slideup, .anim-locating, .anim-fade { animation: none; }
+}
+
+/* ─── Slot grid (sunflower plots) ────────────────────────────────────────── */
+.slot {
+  aspect-ratio: 1;
+  border: 3px solid var(--text);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  word-break: break-word;
+}
+.slot-named { background: var(--sun); }
+.slot-free { background: repeating-linear-gradient(45deg, #fff, #fff 5px, #f3efdf 5px, #f3efdf 10px); color: var(--muted); }
+.slot-pickable { cursor: pointer; transition: transform 0.08s ease; }
+.slot-pickable:hover { transform: scale(1.04); border-color: var(--sun-deep); }
+.slot-selected { outline: 4px solid var(--leaf); outline-offset: -3px; background: #eef6f0; }
+
+/* ─── MapLibre tweaks ────────────────────────────────────────────────────── */
+.maplibregl-ctrl-attrib { font-size: 9px; border-radius: 0; }

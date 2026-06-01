@@ -1,0 +1,59 @@
+// Local "gardener" identity — the player's handle for the leaderboard. Stored
+// in localStorage (no accounts). Used to attribute waterings and namings.
+const KEY = "slunecnice_gardener";
+
+export function getGardener(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function setGardener(name: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(KEY, name.trim());
+  } catch {
+    /* ignore */
+  }
+}
+
+// Points model (gamification).
+export const POINTS_WATER = 10;
+export const POINTS_NAME = 25;
+
+// ── Onboarding flags ──────────────────────────────────────────────────────────
+const ONBOARDED = "slunecnice_onboarded_v1";
+const CAMERA_OK = "slunecnice_camera_ok";
+
+function get(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function set(key: string, value: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isOnboarded(): boolean {
+  return get(ONBOARDED) === "1";
+}
+export function markOnboarded(): void {
+  set(ONBOARDED, "1");
+}
+export function cameraPrimed(): boolean {
+  return get(CAMERA_OK) === "1";
+}
+export function markCameraOk(): void {
+  set(CAMERA_OK, "1");
+}

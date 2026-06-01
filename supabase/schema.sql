@@ -100,6 +100,11 @@ create policy sunflowers_all on public.sunflowers for all using (true) with chec
 drop policy if exists waterings_all on public.waterings;
 create policy waterings_all on public.waterings for all using (true) with check (true);
 
+-- ─── Realtime ─────────────────────────────────────────────────────────────────
+-- Live updates on the public map (spots appear / waterings tick in real time).
+alter publication supabase_realtime add table public.spots;
+alter publication supabase_realtime add table public.waterings;
+
 -- ─── Storage bucket ──────────────────────────────────────────────────────────
 -- Vytvoř bucket "slunecnice-photos" (public) v Storage UI, nebo:
 insert into storage.buckets (id, name, public)

@@ -29,25 +29,6 @@ interface MapLike {
   remove: () => void;
   on: (e: string, cb: (ev?: unknown) => void) => void;
   project: (ll: [number, number]) => { x: number; y: number };
-  getStyle: () => { layers?: Array<{ id: string; type: string }> };
-  setLayoutProperty: (layer: string, name: string, value: unknown) => void;
-  setPaintProperty: (layer: string, name: string, value: unknown) => void;
-}
-
-// Brutalist map: hide every label/POI symbol layer, leaving only the bare
-// block + street geometry. The colored markers (HTML overlay) are the only
-// things that scream.
-function brutalize(m: MapLike) {
-  try {
-    const layers = m.getStyle().layers ?? [];
-    for (const l of layers) {
-      if (l.type === "symbol") {
-        m.setLayoutProperty(l.id, "visibility", "none");
-      }
-    }
-  } catch {
-    /* style not ready / unexpected shape — skip */
-  }
 }
 
 export default function SpotMap({
@@ -55,7 +36,6 @@ export default function SpotMap({
   center = PRAHA,
   zoom = 11.5,
   height = "100%",
-  grayscale = true,
   onMarkerClick,
   onMapClick,
   pickPin = null,
@@ -87,7 +67,7 @@ export default function SpotMap({
 
       const style =
         process.env.NEXT_PUBLIC_MAP_STYLE ||
-        "https://tiles.openfreemap.org/styles/liberty";
+        "https://tiles.openfreemap.org/styles/positron";
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const m: MapLike = new (maplibre as any).Map({
@@ -155,7 +135,6 @@ export default function SpotMap({
       };
 
       m.on("load", () => {
-        brutalize(m);
         buildMarkers();
         sync();
       });
@@ -198,7 +177,6 @@ export default function SpotMap({
         style={{
           width: "100%",
           height: "100%",
-          filter: grayscale ? "grayscale(0.85) contrast(1.05)" : "none",
           borderRadius: "inherit",
         }}
       />

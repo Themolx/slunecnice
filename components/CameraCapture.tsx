@@ -3,16 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { captureSquare } from "@/lib/capture";
 
 /**
- * 1:1 viewfinder with onion-skin of the previous photo. On capture, returns the
- * JPEG blob to the parent. Ported in spirit from Pixilate's CameraView.
+ * Plain 1:1 viewfinder. On capture, returns the JPEG blob to the parent.
  */
 export default function CameraCapture({
-  onionUrl,
   onCapture,
   onCancel,
   hint,
 }: {
-  onionUrl?: string | null;
   onCapture: (blob: Blob) => void;
   onCancel: () => void;
   hint?: string;
@@ -22,7 +19,6 @@ export default function CameraCapture({
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [onion, setOnion] = useState(0.45);
   const [flash, setFlash] = useState(false);
 
   const start = useCallback(async () => {
@@ -45,7 +41,7 @@ export default function CameraCapture({
         try {
           await v.play();
         } catch {
-          /* autoplay quirk; readiness fallback below */
+          /* autoplay quirk */
         }
         window.setTimeout(() => setReady((p) => p || true), 3000);
       }
@@ -79,46 +75,9 @@ export default function CameraCapture({
 
   return (
     <div>
-      {/* Viewfinder */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          aspectRatio: "1 / 1",
-          background: "#000",
-          overflow: "hidden",
-          border: "3px solid var(--text)",
-        }}
-      >
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        />
-
-        {/* onion skin of previous photo */}
-        {onionUrl && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={onionUrl}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              opacity: onion,
-              mixBlendMode: "multiply",
-              pointerEvents: "none",
-            }}
-          />
-        )}
-
-        {/* flash */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#000", overflow: "hidden", borderRadius: "var(--radius-sm)", border: "3px solid var(--text)" }}>
+        <video ref={videoRef} playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         {flash && <div style={{ position: "absolute", inset: 0, background: "#fff" }} />}
-
         {!ready && !error && (
           <div className="type-label" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
             Spouštím kameru…
@@ -132,32 +91,11 @@ export default function CameraCapture({
       </div>
 
       {hint && (
-        <p className="type-label" style={{ color: "var(--muted)", marginTop: 10, textAlign: "center" }}>
-          {hint}
-        </p>
+        <p className="type-label" style={{ color: "var(--muted)", marginTop: 10, textAlign: "center" }}>{hint}</p>
       )}
 
-      {/* onion opacity slider (only if there is a previous photo) */}
-      {onionUrl && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12 }}>
-          <span className="type-label" style={{ color: "var(--muted)" }}>Předchozí</span>
-          <input
-            type="range"
-            min={0}
-            max={0.8}
-            step={0.05}
-            value={onion}
-            onChange={(e) => setOnion(parseFloat(e.target.value))}
-            style={{ flex: 1 }}
-          />
-        </div>
-      )}
-
-      {/* controls */}
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-        <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onCancel} disabled={busy}>
-          Zpět
-        </button>
+        <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onCancel} disabled={busy}>Zpět</button>
         <button className="btn btn-sun" style={{ flex: 1.6 }} onClick={shoot} disabled={!ready || busy}>
           {busy ? "Ukládám…" : "Vyfotit a zalít"}
         </button>

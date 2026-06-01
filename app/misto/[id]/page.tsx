@@ -64,14 +64,14 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
         {/* Action */}
         {!isWater && (
           <div style={{ marginTop: 18 }}>
-            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} />
+            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} />
           </div>
         )}
 
         {/* Extra photos */}
         {photos.length > 1 && (
           <section style={{ marginTop: 24 }}>
-            <h2 className="type-label" style={{ color: "var(--muted)", marginBottom: 10 }}>Snímky filmu</h2>
+            <h2 className="type-label" style={{ color: "var(--muted)", marginBottom: 10 }}>Fotky</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
               {photos.map((p) => (
                 <a key={p} href={photoUrl(p)} target="_blank" rel="noreferrer">

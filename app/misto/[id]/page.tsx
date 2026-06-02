@@ -41,6 +41,9 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
   const lastWatered = waterings[0]?.watered_at ?? null;
   const days = daysSince(lastWatered);
   const isWater = spot.kind === "water";
+  // Only really-planted sunflowers can be watered. Scouted candidates
+  // (navrzeno/vhodne) and gone ones (zaniklo) cannot.
+  const isPlanted = !isWater && (spot.status === "zasazeno" || spot.status === "kvete");
 
   // Newest photo first for the hero.
   const photos = [...spot.photo_paths].reverse();
@@ -90,10 +93,17 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
 
         {spot.notes && <p className="type-body" style={{ marginTop: 14 }}>{spot.notes}</p>}
 
-        {/* Action */}
-        {!isWater && (
+        {/* Action — only for really-planted sunflowers */}
+        {isPlanted && (
           <div style={{ marginTop: 18 }}>
             <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} />
+          </div>
+        )}
+        {!isWater && !isPlanted && (
+          <div className="card" style={{ marginTop: 18, padding: 16, textAlign: "center" }}>
+            <div className="type-label" style={{ color: "var(--muted)" }}>
+              {spot.status === "zaniklo" ? "Tahle slunečnice už tu není." : "Tohle místo je zatím jen navržené — slunečnice tu ještě není zasazená."}
+            </div>
           </div>
         )}
 

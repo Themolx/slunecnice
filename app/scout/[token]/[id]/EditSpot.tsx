@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateSpot, logPlanting, uploadPhoto, deleteSpot } from "@/lib/data";
+import { updateSpot, uploadPhoto, deleteSpot } from "@/lib/data";
 import {
   STATUS_LABELS,
   photoThumb,
@@ -15,11 +15,9 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
   const router = useRouter();
   const [name, setName] = useState(spot.name ?? "");
   const [status, setStatus] = useState<SpotStatus>(spot.status);
-  const [count, setCount] = useState(String(spot.sunflower_count || ""));
   const [notes, setNotes] = useState(spot.notes ?? "");
   const [photos, setPhotos] = useState<string[]>(spot.photo_paths);
   const [saving, setSaving] = useState(false);
-  const [planting, setPlanting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isWater = spot.kind === "water";
@@ -46,7 +44,6 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
       await updateSpot(spot.id, {
         name: name.trim() || null,
         status,
-        sunflower_count: count ? parseInt(count) : 0,
         notes: notes.trim() || null,
         photo_paths: photos,
       });
@@ -55,25 +52,6 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
       setError(e instanceof Error ? e.message : "Uložení selhalo");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const plant = async () => {
-    const n = parseInt(count);
-    if (!n || n < 1) {
-      setError("Zadej počet slunečnic");
-      return;
-    }
-    setPlanting(true);
-    setError(null);
-    try {
-      await logPlanting(spot.id, n);
-      setStatus("zasazeno");
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Sázení selhalo");
-    } finally {
-      setPlanting(false);
     }
   };
 
@@ -110,16 +88,10 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
                 </button>
               ))}
             </div>
+            <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, fontWeight: 600, textTransform: "none", letterSpacing: 0 }}>
+              Navrženo / Vhodné = kandidát (jen tady, veřejně skrytý). Zasazeno / Kvete = veřejně viditelné a zalévatelné.
+            </p>
           </Field>
-
-          <Field label="Počet slunečnic">
-            <input className="field" inputMode="numeric" value={count} onChange={(e) => setCount(e.target.value.replace(/[^0-9]/g, ""))} placeholder="12" />
-          </Field>
-
-          {/* Plant action: generates the sunflower slots */}
-          <button type="button" className="btn btn-ink" style={{ width: "100%", marginBottom: 18 }} onClick={plant} disabled={planting}>
-            {planting ? "Sázím…" : "Zaznamenat sázení (vytvoří sloty)"}
-          </button>
         </>
       )}
 

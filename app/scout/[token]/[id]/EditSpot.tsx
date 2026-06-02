@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateSpot, logPlanting, uploadPhoto } from "@/lib/data";
+import { updateSpot, logPlanting, uploadPhoto, deleteSpot } from "@/lib/data";
 import {
   STATUS_LABELS,
   photoThumb,
@@ -23,6 +23,21 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
   const [error, setError] = useState<string | null>(null);
 
   const isWater = spot.kind === "water";
+  const [deleting, setDeleting] = useState(false);
+
+  const remove = async () => {
+    if (!confirm("Smazat tohle místo? Nelze vrátit.")) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteSpot(spot.id);
+      router.push(`/scout/${token}`);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Smazání selhalo");
+      setDeleting(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -129,6 +144,10 @@ export default function EditSpot({ token, spot }: { token: string; spot: Spot })
           {error}
         </div>
       )}
+
+      <button type="button" className="btn btn-ghost" style={{ width: "100%", color: "#C0392B", borderColor: "#C0392B" }} onClick={remove} disabled={deleting}>
+        {deleting ? "Mažu…" : "Smazat místo"}
+      </button>
 
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: 12, background: "var(--text)", borderTop: "4px solid var(--sun)", display: "flex", gap: 8 }}>
         <a href={`/misto/${spot.id}`} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{ flex: 1, color: "#fff", borderColor: "#fff" }}>

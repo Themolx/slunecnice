@@ -108,6 +108,11 @@ export async function updateSpot(id: string, patch: Partial<Spot>): Promise<void
   if (error) throw error;
 }
 
+export async function deleteSpot(id: string): Promise<void> {
+  const { error } = await supabase.from("spots").delete().eq("id", id);
+  if (error) throw error;
+}
+
 // Plant: set count, mark zasazeno, generate the sunflower slots.
 export async function logPlanting(spotId: string, count: number): Promise<void> {
   const { error: updErr } = await supabase

@@ -15,7 +15,12 @@ export default async function HomePage() {
   let spots: HomeSpot[] = [];
   try {
     const [all, lastWatered] = await Promise.all([fetchSpots(), fetchLastWateredMap()]);
-    spots = all.map((s) => ({ ...s, lastWatered: lastWatered.get(s.id) ?? null }));
+    // Public map shows only really-planted sunflowers + water sources. Scouted
+    // candidates (status navrzeno/vhodne) and gone ones (zaniklo) stay crew-only.
+    const PUBLIC_PLANTED = new Set(["zasazeno", "kvete"]);
+    spots = all
+      .filter((s) => s.kind === "water" || PUBLIC_PLANTED.has(s.status))
+      .map((s) => ({ ...s, lastWatered: lastWatered.get(s.id) ?? null }));
   } catch {
     // Supabase not configured yet — render empty.
   }

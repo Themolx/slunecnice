@@ -21,6 +21,7 @@ interface SpotMapProps {
   onMarkerClick?: (id: string) => void;
   onMapClick?: (lat: number, lon: number) => void;
   pickPin?: { lat: number; lon: number } | null; // a draggable-ish target pin
+  flyNonce?: number; // bump to fly the map to `center` (even if coords unchanged)
 }
 
 const PRAHA: [number, number] = [14.42, 50.075];
@@ -40,6 +41,7 @@ export default function SpotMap({
   onMarkerClick,
   onMapClick,
   pickPin = null,
+  flyNonce,
 }: SpotMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -171,13 +173,14 @@ export default function SpotMap({
     el?._rebuild?.();
   }, [markers, pickPin]);
 
-  // Smoothly fly to a new center (e.g. when the user's GPS location arrives).
-  const centerKey = center ? `${center[0].toFixed(5)},${center[1].toFixed(5)}` : "";
+  // Smoothly fly to `center` whenever flyNonce changes (GPS arrival, find-me,
+  // tapping a spot). Using a nonce lets us re-fly even to the same coords.
   useEffect(() => {
+    if (!flyNonce) return;
     const m = mapInstance.current;
     if (m && center) m.flyTo?.({ center, zoom, duration: 1050, essential: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [centerKey]);
+  }, [flyNonce]);
 
   return (
     <div style={{ position: "relative", width: "100%", height }}>

@@ -66,18 +66,32 @@ export function markGpsOk(): void {
   set(GPS_OK, "1");
 }
 
-// ── Per-user watering cooldown ────────────────────────────────────────────────
-// A gardener can water again every WATER_COOLDOWN_MIN minutes (any flower).
-// Tracked per device in localStorage.
+// ── Per-plant-per-user watering cooldown ──────────────────────────────────────
+// A gardener can water a given flower again every WATER_COOLDOWN_MIN minutes,
+// but can immediately water OTHER flowers, and other people can water the same
+// flower. Tracked per device in localStorage as { spotId: timestamp }.
 export const WATER_COOLDOWN_MIN = 10;
-const LAST_WATER = "slunecnice_last_water";
+const LAST_WATER = "slunecnice_last_water_v2";
 
-export function markWatered(ts = Date.now()): void {
-  set(LAST_WATER, String(ts));
-}
-export function waterCooldownLeftMs(): number {
+function readWaterMap(): Record<string, number> {
   const v = get(LAST_WATER);
-  const last = v ? parseInt(v, 10) : NaN;
-  if (!last || Number.isNaN(last)) return 0;
+  if (!v) return {};
+  try {
+    const m = JSON.parse(v);
+    return m && typeof m === "object" ? m : {};
+  } catch {
+    return {};
+  }
+}
+
+export function markWatered(spotId: string, ts = Date.now()): void {
+  const m = readWaterMap();
+  m[spotId] = ts;
+  set(LAST_WATER, JSON.stringify(m));
+}
+
+export function waterCooldownLeftMs(spotId: string): number {
+  const last = readWaterMap()[spotId];
+  if (!last) return 0;
   return Math.max(0, last + WATER_COOLDOWN_MIN * 60000 - Date.now());
 }

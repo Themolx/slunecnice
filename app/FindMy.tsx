@@ -23,7 +23,7 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
   const router = useRouter();
   const [showWater, setShowWater] = useState(true);
   const [user, setUser] = useState<{ lat: number; lon: number } | null>(null);
-  const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
+  const [fly, setFly] = useState<{ lat: number; lon: number; zoom: number; nonce: number } | null>(null);
 
   // ── Sheet drag state ────────────────────────────────────────────────────────
   const [vh, setVh] = useState(800);
@@ -88,14 +88,21 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
   };
 
   // ── Location ────────────────────────────────────────────────────────────────
-  useEffect(() => {
+  const locate = useCallback((flyTo: boolean) => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (p) => setUser({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      (p) => {
+        const u = { lat: p.coords.latitude, lon: p.coords.longitude };
+        setUser(u);
+        if (flyTo) setFly({ ...u, zoom: 14.5, nonce: Date.now() });
+      },
       () => {},
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
+  useEffect(() => {
+    locate(true);
+  }, [locate]);
 
   // ── Realtime ────────────────────────────────────────────────────────────────
   const refreshTimer = useRef<number | null>(null);
@@ -151,7 +158,7 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
       tap();
       const s = spots.find((x) => x.id === id);
       if (s) {
-        setFlyTarget({ lat: s.lat, lon: s.lon });
+        setFly({ lat: s.lat, lon: s.lon, zoom: 15.5, nonce: Date.now() });
         window.setTimeout(() => router.push(`/misto/${id}`), 640);
       } else {
         router.push(`/misto/${id}`);
@@ -165,8 +172,9 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
       <div style={{ position: "absolute", inset: 0 }}>
         <SpotMapWrapper
           markers={markers}
-          center={flyTarget ? [flyTarget.lon, flyTarget.lat] : user ? [user.lon, user.lat] : undefined}
-          zoom={flyTarget ? 15.5 : user ? 13.5 : 11.5}
+          center={fly ? [fly.lon, fly.lat] : user ? [user.lon, user.lat] : undefined}
+          zoom={fly ? fly.zoom : user ? 13.5 : 11.5}
+          flyNonce={fly?.nonce}
           onMarkerClick={open}
         />
       </div>
@@ -177,6 +185,38 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
         style={{ position: "absolute", top: 14, right: 14, zIndex: 5, background: showWater ? "#1E7A3D" : "#fff", color: showWater ? "#fff" : "var(--text)", borderColor: "#1E7A3D", cursor: "pointer" }}
       >
         Voda {showWater ? "zap" : "vyp"}
+      </button>
+
+      {/* find me — re-center on the user, rides above the sheet */}
+      <button
+        onClick={() => { tap(); if (user) setFly({ ...user, zoom: 14.5, nonce: Date.now() }); else locate(true); }}
+        aria-label="Najdi mě"
+        style={{
+          position: "absolute",
+          left: 14,
+          bottom: h + 12,
+          zIndex: 11,
+          width: 46,
+          height: 46,
+          background: "#fff",
+          border: "3px solid var(--text)",
+          borderRadius: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          transition: dragging ? "none" : "bottom 0.34s cubic-bezier(0.32,0.72,0,1)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--leaf)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3.2" fill="var(--leaf)" stroke="none" />
+          <circle cx="12" cy="12" r="7" />
+          <line x1="12" y1="1.5" x2="12" y2="4.5" />
+          <line x1="12" y1="19.5" x2="12" y2="22.5" />
+          <line x1="1.5" y1="12" x2="4.5" y2="12" />
+          <line x1="19.5" y1="12" x2="22.5" y2="12" />
+        </svg>
       </button>
 
       {/* Bottom sheet */}

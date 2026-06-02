@@ -31,13 +31,13 @@ export default function SpotActions({
   const [gardener, setG] = useState(() => getGardener());
   const [nameInput, setNameInput] = useState(() => getGardener());
 
-  // Tick the per-user cooldown countdown.
+  // Tick the per-plant-per-user cooldown countdown.
   useEffect(() => {
-    const tick = () => setCooldownLeft(waterCooldownLeftMs());
+    const tick = () => setCooldownLeft(waterCooldownLeftMs(spotId));
     tick();
     const id = window.setInterval(tick, 5000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [spotId]);
 
   const close = () => {
     setStep("panel");
@@ -47,8 +47,8 @@ export default function SpotActions({
   const startWatering = () => {
     tap();
     setError(null);
-    if (waterCooldownLeftMs() > 0) {
-      setCooldownLeft(waterCooldownLeftMs());
+    if (waterCooldownLeftMs(spotId) > 0) {
+      setCooldownLeft(waterCooldownLeftMs(spotId));
       return;
     }
     if (!gardener.trim()) {
@@ -108,8 +108,8 @@ export default function SpotActions({
       await logWatering({ spot_id: spotId, watered_by: gardener || undefined, photo_path: path });
       await updateSpot(spotId, { photo_paths: nextPhotos });
       setPhotos(nextPhotos);
-      markWatered();
-      setCooldownLeft(waterCooldownLeftMs());
+      markWatered(spotId);
+      setCooldownLeft(waterCooldownLeftMs(spotId));
       router.refresh();
       success();
       setStep("done");
@@ -137,28 +137,24 @@ export default function SpotActions({
 
   return (
     <>
-      {/* inline trigger on the page */}
-      <div className="card" style={{ padding: 18 }}>
-        {cooldownLeft > 0 ? (
-          <>
-            <button className="btn" style={{ width: "100%", fontSize: 16, padding: "16px 20px", opacity: 0.55, cursor: "not-allowed", background: "#eee" }} disabled>
-              Počkej {Math.ceil(cooldownLeft / 60000)} min
-            </button>
-            <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
-              Zalil/a jsi nedávno. Další zálivka za {Math.ceil(cooldownLeft / 60000)} min · mezitím najdi další žíznivou.
-            </p>
-          </>
-        ) : (
-          <>
-            <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
-              {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
-            </button>
-            <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
-              {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů · 1× za {WATER_COOLDOWN_MIN} min
-            </p>
-          </>
-        )}
-      </div>
+      {/* inline trigger — hidden entirely while this flower is on your cooldown */}
+      {cooldownLeft > 0 ? (
+        <div style={{ textAlign: "center", padding: "8px 0" }}>
+          <div className="type-label" style={{ color: "var(--leaf)" }}>Tuhle slunečnici jsi právě zalil/a</div>
+          <div className="type-label" style={{ color: "var(--muted)", marginTop: 6 }}>
+            Díky. Najdi na mapě další žíznivou · k téhle se vrať za {Math.ceil(cooldownLeft / 60000)} min.
+          </div>
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 18 }}>
+          <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
+            {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
+          </button>
+          <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
+            {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů
+          </p>
+        </div>
+      )}
 
       {/* full-screen flow */}
       {step !== "panel" && (

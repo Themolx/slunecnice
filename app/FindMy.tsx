@@ -158,13 +158,14 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
       tap();
       const s = spots.find((x) => x.id === id);
       if (s) {
+        setH(snaps.mini); // drop the sheet so the map fly-by is visible
         setFly({ lat: s.lat, lon: s.lon, zoom: 15.5, nonce: Date.now() });
-        window.setTimeout(() => router.push(`/misto/${id}`), 640);
+        window.setTimeout(() => router.push(`/misto/${id}`), 760);
       } else {
         router.push(`/misto/${id}`);
       }
     },
-    [router, spots]
+    [router, spots, snaps.mini]
   );
 
   return (

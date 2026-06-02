@@ -6,7 +6,9 @@ import { fetchSpots, fetchLastWateredMap } from "@/lib/data";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Slunečnice — najdi nejbližší",
+  title: "Živá mapa slunečnic — guerilla sázení v Praze a na Palmovce",
+  description:
+    "Najdi na živé mapě nejbližší slunečnici v Praze, zalij ji a vyfoť. Kolektivní guerilla gardening na Palmovce, v Libni a po celém městě.",
 };
 
 export default async function HomePage() {

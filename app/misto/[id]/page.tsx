@@ -93,7 +93,7 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
         {/* Action */}
         {!isWater && (
           <div style={{ marginTop: 18 }}>
-            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} lastWateredAt={lastWatered} />
+            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} />
           </div>
         )}
 

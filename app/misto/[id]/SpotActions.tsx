@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { logWatering, uploadBlob, updateSpot } from "@/lib/data";
-import { distanceMetres, WATERING_RADIUS_M, GPS_VERIFY, WATERING_COOLDOWN_H, hoursSince } from "@/lib/supabase";
-import { getGardener, setGardener, POINTS_WATER } from "@/lib/gardener";
+import { distanceMetres, WATERING_RADIUS_M, GPS_VERIFY } from "@/lib/supabase";
+import { getGardener, setGardener, POINTS_WATER, markWatered, waterCooldownLeftMs, WATER_COOLDOWN_MIN } from "@/lib/gardener";
 import { success, tap } from "@/lib/haptics";
 import CameraCapture from "@/components/CameraCapture";
 
@@ -14,13 +14,11 @@ export default function SpotActions({
   spotLat,
   spotLon,
   initialPhotos,
-  lastWateredAt,
 }: {
   spotId: string;
   spotLat: number;
   spotLon: number;
   initialPhotos: string[];
-  lastWateredAt: string | null;
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("panel");
@@ -28,9 +26,18 @@ export default function SpotActions({
   const [error, setError] = useState<string | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
 
   const [gardener, setG] = useState(() => getGardener());
   const [nameInput, setNameInput] = useState(() => getGardener());
+
+  // Tick the per-user cooldown countdown.
+  useEffect(() => {
+    const tick = () => setCooldownLeft(waterCooldownLeftMs());
+    tick();
+    const id = window.setInterval(tick, 5000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const close = () => {
     setStep("panel");
@@ -40,6 +47,10 @@ export default function SpotActions({
   const startWatering = () => {
     tap();
     setError(null);
+    if (waterCooldownLeftMs() > 0) {
+      setCooldownLeft(waterCooldownLeftMs());
+      return;
+    }
     if (!gardener.trim()) {
       setStep("askName");
       return;
@@ -97,6 +108,8 @@ export default function SpotActions({
       await logWatering({ spot_id: spotId, watered_by: gardener || undefined, photo_path: path });
       await updateSpot(spotId, { photo_paths: nextPhotos });
       setPhotos(nextPhotos);
+      markWatered();
+      setCooldownLeft(waterCooldownLeftMs());
       router.refresh();
       success();
       setStep("done");
@@ -125,34 +138,27 @@ export default function SpotActions({
   return (
     <>
       {/* inline trigger on the page */}
-      {(() => {
-        const since = hoursSince(lastWateredAt);
-        const onCooldown = since !== null && since < WATERING_COOLDOWN_H;
-        const remaining = since === null ? 0 : Math.ceil(WATERING_COOLDOWN_H - since);
-        return (
-          <div className="card" style={{ padding: 18 }}>
-            {onCooldown ? (
-              <>
-                <button className="btn" style={{ width: "100%", fontSize: 16, padding: "16px 20px", opacity: 0.55, cursor: "not-allowed", background: "#eee" }} disabled>
-                  Dnes už zalitá
-                </button>
-                <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
-                  Tahle slunečnice má vodu. Vrať se za {remaining} h · nebo zalij jinou žíznivou na mapě.
-                </p>
-              </>
-            ) : (
-              <>
-                <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
-                  {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
-                </button>
-                <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
-                  {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů
-                </p>
-              </>
-            )}
-          </div>
-        );
-      })()}
+      <div className="card" style={{ padding: 18 }}>
+        {cooldownLeft > 0 ? (
+          <>
+            <button className="btn" style={{ width: "100%", fontSize: 16, padding: "16px 20px", opacity: 0.55, cursor: "not-allowed", background: "#eee" }} disabled>
+              Počkej {Math.ceil(cooldownLeft / 60000)} min
+            </button>
+            <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
+              Zalil/a jsi nedávno. Další zálivka za {Math.ceil(cooldownLeft / 60000)} min · mezitím najdi další žíznivou.
+            </p>
+          </>
+        ) : (
+          <>
+            <button className="btn btn-leaf" style={{ width: "100%", fontSize: 16, padding: "16px 20px" }} onClick={startWatering}>
+              {GPS_VERIFY ? "Zalít · ověříme polohu" : "Zalít a vyfotit"}
+            </button>
+            <p className="type-label" style={{ color: "var(--muted)", marginTop: 8, textAlign: "center" }}>
+              {GPS_VERIFY ? `Jen do ${WATERING_RADIUS_M} m · ` : ""}za zálivku {POINTS_WATER} bodů · 1× za {WATER_COOLDOWN_MIN} min
+            </p>
+          </>
+        )}
+      </div>
 
       {/* full-screen flow */}
       {step !== "panel" && (

@@ -23,14 +23,16 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
   const router = useRouter();
   const [showWater, setShowWater] = useState(true);
   const [user, setUser] = useState<{ lat: number; lon: number } | null>(null);
+  const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
 
   // ── Sheet drag state ────────────────────────────────────────────────────────
   const [vh, setVh] = useState(800);
   const snaps = useMemo(() => {
+    const mini = 74; // just the grabber + header — whole map visible
     const peek = Math.min(330, Math.round(vh * 0.42));
-    const mid = Math.round(vh * 0.52);
+    const mid = Math.round(vh * 0.55);
     const full = Math.round(vh * 0.86);
-    return { peek, mid, full, list: [peek, mid, full] };
+    return { mini, peek, mid, full, list: [mini, peek, mid, full] };
   }, [vh]);
   const [h, setH] = useState(330);
   const [dragging, setDragging] = useState(false);
@@ -44,8 +46,8 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
   }, []);
   // clamp height into range when viewport changes
   useEffect(() => {
-    setH((cur) => Math.max(snaps.peek, Math.min(snaps.full, cur || snaps.peek)));
-  }, [snaps.peek, snaps.full]);
+    setH((cur) => Math.max(snaps.mini, Math.min(snaps.full, cur || snaps.peek)));
+  }, [snaps.mini, snaps.peek, snaps.full]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -61,16 +63,16 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
     d.lastY = e.clientY;
     d.lastT = now;
     d.moved += Math.abs(e.movementY || 0);
-    const next = Math.max(snaps.peek, Math.min(snaps.full, d.startH + (d.startY - e.clientY)));
+    const next = Math.max(snaps.mini, Math.min(snaps.full, d.startH + (d.startY - e.clientY)));
     setH(next);
   };
   const onPointerUp = () => {
     if (!dragging) return;
     setDragging(false);
     const d = drag.current;
-    // tap (no real movement) → toggle peek/full
+    // tap (no real movement) → expanded collapses to mini, otherwise expand to full
     if (d.moved < 6) {
-      const target = h <= snaps.peek + 20 ? snaps.full : snaps.peek;
+      const target = h > snaps.peek + 20 ? snaps.mini : snaps.full;
       setH(target);
       tap();
       return;
@@ -143,15 +145,28 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
     return `${(m / 1000).toFixed(1)} km`;
   };
 
-  const open = useCallback((id: string) => { tap(); router.push(`/misto/${id}`); }, [router]);
+  // Click a spot: briefly fly the map to it, then navigate (white-blur covers the cut).
+  const open = useCallback(
+    (id: string) => {
+      tap();
+      const s = spots.find((x) => x.id === id);
+      if (s) {
+        setFlyTarget({ lat: s.lat, lon: s.lon });
+        window.setTimeout(() => router.push(`/misto/${id}`), 640);
+      } else {
+        router.push(`/misto/${id}`);
+      }
+    },
+    [router, spots]
+  );
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0 }}>
         <SpotMapWrapper
           markers={markers}
-          center={user ? [user.lon, user.lat] : undefined}
-          zoom={user ? 13.5 : 11.5}
+          center={flyTarget ? [flyTarget.lon, flyTarget.lat] : user ? [user.lon, user.lat] : undefined}
+          zoom={flyTarget ? 15.5 : user ? 13.5 : 11.5}
           onMarkerClick={open}
         />
       </div>

@@ -175,7 +175,7 @@ export default function SpotMap({
   const centerKey = center ? `${center[0].toFixed(5)},${center[1].toFixed(5)}` : "";
   useEffect(() => {
     const m = mapInstance.current;
-    if (m && center) m.flyTo?.({ center, zoom, duration: 1600, essential: true });
+    if (m && center) m.flyTo?.({ center, zoom, duration: 1050, essential: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [centerKey]);
 

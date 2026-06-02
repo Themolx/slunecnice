@@ -65,3 +65,19 @@ export function gpsPrimed(): boolean {
 export function markGpsOk(): void {
   set(GPS_OK, "1");
 }
+
+// ── Per-user watering cooldown ────────────────────────────────────────────────
+// A gardener can water again every WATER_COOLDOWN_MIN minutes (any flower).
+// Tracked per device in localStorage.
+export const WATER_COOLDOWN_MIN = 10;
+const LAST_WATER = "slunecnice_last_water";
+
+export function markWatered(ts = Date.now()): void {
+  set(LAST_WATER, String(ts));
+}
+export function waterCooldownLeftMs(): number {
+  const v = get(LAST_WATER);
+  const last = v ? parseInt(v, 10) : NaN;
+  if (!last || Number.isNaN(last)) return 0;
+  return Math.max(0, last + WATER_COOLDOWN_MIN * 60000 - Date.now());
+}

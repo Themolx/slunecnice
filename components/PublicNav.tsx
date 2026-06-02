@@ -1,5 +1,4 @@
 import Link from "next/link";
-import HowToLink from "./HowToLink";
 
 export default function PublicNav() {
   return (
@@ -32,13 +31,6 @@ export default function PublicNav() {
           </span>
         </Link>
         <nav style={{ display: "flex", gap: 18, alignItems: "center" }}>
-          <Link href="/" className="nav-link">
-            Mapa
-          </Link>
-          <Link href="/zebricek" className="nav-link">
-            Žebříček
-          </Link>
-          <HowToLink />
           <Link href="/o-projektu" className="nav-link">
             O projektu
           </Link>

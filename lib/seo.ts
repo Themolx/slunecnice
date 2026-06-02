@@ -1,5 +1,9 @@
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://slunecnice.vercel.app";
 
+// Google Search Console verification (HTML-tag method). Paste the `content`
+// value from Search Console → URL prefix → "HTML tag" here, then redeploy.
+export const GOOGLE_SITE_VERIFICATION = "ytV--uX1liM-psVaIB92gNYcgOFM7A01zT7Hv2tMqkM";
+
 export const SITE_NAME = "Slunečnice";
 
 export const SITE_TITLE = "Slunečnice — guerilla sázení slunečnic v Praze (Palmovka)";

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import RouteTransition from "@/components/RouteTransition";
-import { SITE_URL, SITE_NAME, SITE_TITLE, SITE_DESCRIPTION, KEYWORDS, AREA_SERVED } from "@/lib/seo";
+import { SITE_URL, SITE_NAME, SITE_TITLE, SITE_DESCRIPTION, KEYWORDS, AREA_SERVED, GOOGLE_SITE_VERIFICATION } from "@/lib/seo";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -35,6 +35,7 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
   category: "environment",
+  ...(GOOGLE_SITE_VERIFICATION ? { verification: { google: GOOGLE_SITE_VERIFICATION } } : {}),
 };
 
 export const viewport: Viewport = {

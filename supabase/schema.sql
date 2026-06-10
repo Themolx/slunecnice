@@ -91,14 +91,22 @@ alter table public.spots enable row level security;
 alter table public.sunflowers enable row level security;
 alter table public.waterings enable row level security;
 
+-- spots: open writes for now (crew uses the anon client). FÁZE 2: zamknout na
+-- read-only pro anon a crew zápisy přesunout na server route se service-role.
 drop policy if exists spots_all on public.spots;
 create policy spots_all on public.spots for all using (true) with check (true);
 
+-- sunflowers: read-only from the public (naming flow not in use)
 drop policy if exists sunflowers_all on public.sunflowers;
-create policy sunflowers_all on public.sunflowers for all using (true) with check (true);
+drop policy if exists sunflowers_select on public.sunflowers;
+create policy sunflowers_select on public.sunflowers for select using (true);
 
+-- waterings: public can read + insert only (no update/delete)
 drop policy if exists waterings_all on public.waterings;
-create policy waterings_all on public.waterings for all using (true) with check (true);
+drop policy if exists waterings_select on public.waterings;
+drop policy if exists waterings_insert on public.waterings;
+create policy waterings_select on public.waterings for select using (true);
+create policy waterings_insert on public.waterings for insert with check (true);
 
 -- ─── Realtime ─────────────────────────────────────────────────────────────────
 -- Live updates on the public map (spots appear / waterings tick in real time).
@@ -107,9 +115,12 @@ alter publication supabase_realtime add table public.waterings;
 
 -- ─── Storage bucket ──────────────────────────────────────────────────────────
 -- Vytvoř bucket "slunecnice-photos" (public) v Storage UI, nebo:
-insert into storage.buckets (id, name, public)
-values ('slunecnice-photos', 'slunecnice-photos', true)
-on conflict (id) do nothing;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('slunecnice-photos', 'slunecnice-photos', true, 10485760,
+        array['image/jpeg','image/png','image/webp','image/heic','image/heif'])
+on conflict (id) do update
+  set file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists "slunecnice photos read" on storage.objects;
 create policy "slunecnice photos read" on storage.objects

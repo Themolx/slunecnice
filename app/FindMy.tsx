@@ -9,6 +9,7 @@ import {
   drynessColor,
   daysSince,
   distanceMetres,
+  czDays,
   WATER_LABELS,
   STATUS_LABELS,
   type Spot,
@@ -290,7 +291,7 @@ export default function FindMy({ spots }: { spots: HomeSpot[] }) {
                         <span>{STATUS_LABELS[s.status]}</span>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: drynessColor(days) }}>
                           <span style={{ width: 8, height: 8, background: drynessColor(days), border: "1.5px solid var(--text)" }} />
-                          {days === null ? "nezaléváno" : days === 0 ? "dnes" : `${days} dní bez vody`}
+                          {days === null ? "nezaléváno" : days === 0 ? "dnes" : `${czDays(days)} bez vody`}
                         </span>
                       </>
                     )}

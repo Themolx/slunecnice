@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { logWatering, uploadBlob, updateSpot } from "@/lib/data";
+import { logWatering, uploadBlob } from "@/lib/data";
 import { distanceMetres, WATERING_RADIUS_M, GPS_VERIFY } from "@/lib/supabase";
 import { getGardener, setGardener, POINTS_WATER, markWatered, waterCooldownLeftMs, WATER_COOLDOWN_MIN } from "@/lib/gardener";
 import { success, tap } from "@/lib/haptics";
@@ -13,19 +13,16 @@ export default function SpotActions({
   spotId,
   spotLat,
   spotLon,
-  initialPhotos,
 }: {
   spotId: string;
   spotLat: number;
   spotLon: number;
-  initialPhotos: string[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("panel");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
-  const [photos, setPhotos] = useState<string[]>(initialPhotos);
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
   const [gardener, setG] = useState(() => getGardener());
@@ -103,11 +100,11 @@ export default function SpotActions({
     setBusy(true);
     setError(null);
     try {
-      const path = await uploadBlob(blob, `spots/${spotId}`);
-      const nextPhotos = [...photos, path];
+      // Watering photos belong to the watering log only — they are the spot's
+      // care history. Don't write them onto spot.photo_paths (that's the crew's
+      // scout gallery, and concurrent appends would clobber each other).
+      const path = await uploadBlob(blob, `waterings/${spotId}`);
       await logWatering({ spot_id: spotId, watered_by: gardener || undefined, photo_path: path });
-      await updateSpot(spotId, { photo_paths: nextPhotos });
-      setPhotos(nextPhotos);
       markWatered(spotId);
       setCooldownLeft(waterCooldownLeftMs(spotId));
       router.refresh();

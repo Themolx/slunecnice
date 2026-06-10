@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import SpotActions from "./SpotActions";
 import PhotoGallery from "@/components/PhotoGallery";
 import { fetchSpot, fetchWaterings } from "@/lib/data";
-import { photoUrl, STATUS_LABELS, WATER_LABELS, daysSince, drynessColor } from "@/lib/supabase";
+import { photoUrl, photoThumb, STATUS_LABELS, WATER_LABELS, daysSince, drynessColor, czDaysAgo } from "@/lib/supabase";
 import { SITE_URL } from "@/lib/seo";
 
 export const revalidate = 30;
@@ -45,8 +45,12 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
   // (navrzeno/vhodne) and gone ones (zaniklo) cannot.
   const isPlanted = !isWater && (spot.status === "zasazeno" || spot.status === "kvete");
 
-  // Newest photo first for the hero.
-  const photos = [...spot.photo_paths].reverse();
+  // Gallery = crew/scout photos (newest first). If a spot has no scout photo,
+  // fall back to its watering photos so the hero isn't empty.
+  const photos =
+    spot.photo_paths.length > 0
+      ? [...spot.photo_paths].reverse()
+      : waterings.filter((w) => w.photo_path).map((w) => w.photo_path as string);
 
   const spotName = spot.name || (isWater ? "Zdroj vody" : "Slunečnice");
   const breadcrumb = {
@@ -85,7 +89,7 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
             <>
               <span className="pill">{STATUS_LABELS[spot.status]}</span>
               <span className="pill" style={{ borderColor: drynessColor(days), color: drynessColor(days) }}>
-                {days === null ? "Ještě nezaléváno" : days === 0 ? "Zaléváno dnes" : `Zaléváno před ${days} dny`}
+                {days === null ? "Ještě nezaléváno" : `Zaléváno ${czDaysAgo(days)}`}
               </span>
             </>
           )}
@@ -96,7 +100,7 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
         {/* Action — only for really-planted sunflowers */}
         {isPlanted && (
           <div style={{ marginTop: 18 }}>
-            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} initialPhotos={spot.photo_paths} />
+            <SpotActions spotId={spot.id} spotLat={spot.lat} spotLon={spot.lon} />
           </div>
         )}
         {!isWater && !isPlanted && (
@@ -115,9 +119,17 @@ export default async function SpotPage({ params }: { params: Promise<{ id: strin
               {waterings.slice(0, 20).map((w) => {
                 const d = daysSince(w.watered_at);
                 return (
-                  <div key={w.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 12px", border: "2px solid var(--text)", borderRadius: "var(--radius-sm)", background: "#fff", fontSize: 13, fontWeight: 600 }}>
-                    <span>{w.watered_by || "Anonym"}</span>
-                    <span style={{ color: "var(--muted)" }}>{d === 0 ? "dnes" : d === 1 ? "včera" : `před ${d} dny`}</span>
+                  <div key={w.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "8px 12px", border: "2px solid var(--text)", borderRadius: "var(--radius-sm)", background: "#fff", fontSize: 13, fontWeight: 600 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      {w.photo_path && (
+                        <a href={photoUrl(w.photo_path)} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={photoThumb(w.photo_path, 80)} alt="" style={{ width: 34, height: 34, objectFit: "cover", borderRadius: 6, border: "2px solid var(--text)", display: "block" }} />
+                        </a>
+                      )}
+                      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{w.watered_by || "Anonym"}</span>
+                    </span>
+                    <span style={{ color: "var(--muted)", flexShrink: 0 }}>{czDaysAgo(d)}</span>
                   </div>
                 );
               })}

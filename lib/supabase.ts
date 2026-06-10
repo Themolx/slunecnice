@@ -152,6 +152,20 @@ export function hoursSince(iso: string | null): number | null {
   return (Date.now() - new Date(iso).getTime()) / 3600000;
 }
 
+// Czech plural for "N days" (1 den, 2-4 dny, 5+ dní).
+export function czDays(days: number): string {
+  const unit = days === 1 ? "den" : days >= 2 && days <= 4 ? "dny" : "dní";
+  return `${days} ${unit}`;
+}
+
+// Czech relative "N days ago" with correct grammar.
+export function czDaysAgo(days: number | null): string {
+  if (days === null) return "ještě nezaléváno";
+  if (days === 0) return "dnes";
+  if (days === 1) return "včera";
+  return `před ${czDays(days)}`;
+}
+
 // "Dryness" color: greener when freshly watered, warmer/redder the longer dry.
 export function drynessColor(days: number | null): string {
   if (days === null) return "#C0C0C0";      // never watered
